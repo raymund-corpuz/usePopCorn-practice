@@ -67,44 +67,53 @@ export default function App() {
   const avgUserRating = average(watched.map((movie) => movie.userRating));
   const avgRuntime = average(watched.map((movie) => movie.runtime));
 
-  const queries = "interstellar";
+  const tempQuery = "interstellar";
 
-  useEffect(function () {
-    async function fetchMovies() {
-      try {
-        setIsLoading(true);
-        const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&s=${queries}`
-        );
-        //Error handling Start
-        if (!res.ok)
-          throw new Error("Something went wrong with fetching movies");
-        //Error handling End
-        const data = await res.json();
-        setMovies(data.Search);
-        setIsLoading(false);
-      } catch (error) {
-        console.error(error.message);
-        setErr(error.message);
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          setIsLoading(true);
+          //RESET ERROR START
+          setErr("");
+          //RESET ERROR END
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+          );
+          //Error handling Start
+          if (!res.ok)
+            throw new Error("Something went wrong with fetching movies");
+          //Error handling End
+          const data = await res.json();
+          // Error can't find any movie Start
+          if (data.Response === "False") throw new Error("Movie not found");
+          // Error Can't find any movie End
+          setMovies(data.Search);
+          setIsLoading(false);
+        } catch (error) {
+          setErr(error.message);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }
-    fetchMovies();
-  }, []);
+      // NO QUERY START
+      if (!query.length < 3) {
+        setMovies([]);
+        setErr("");
+        return;
+      }
+      // NO QUERY END
+
+      fetchMovies();
+    },
+    [query]
+  );
 
   return (
     <>
       <Navbar query={query} movies={movies} setQuery={setQuery} />
 
       <main className="main">
-        {/* {isLoading ? (
-          <Loader />
-        ) : (
-          <MovieList
-            setIsOpen1={setIsOpen1}
-            isOpen1={isOpen1}
-            movies={movies}
-          />
-        )} */}
         {isLoading && <Loader />}
         {!isLoading && !err && (
           <MovieList
